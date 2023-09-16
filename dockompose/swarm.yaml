@@ -1,0 +1,98 @@
+version: "3"
+
+services:
+  broker-service:
+    image: ashutripathi/broker-service:1.0.0
+    ports:
+      - 8080:8080
+    deploy:
+      mode: replicated
+      replicas: 1
+  caddy:
+    image: ashutripathi/caddy:1.0.0
+    ports:
+      - 80:80
+      - 443:443
+    deploy:
+      mode: replicated
+      replicas: 1
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+  listener-service:
+    image: ashutripathi/listener-service:1.0.0
+    deploy:
+      mode: replicated
+      replicas: 1
+  authentication-service:
+    image: ashutripathi/authentication-service:1.0.0
+    ports:
+      - 8081:8081
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      - DSN="user=admin dbname=postgres sslmode=disable password=admin host=dockompose-postgres-1 port=5432"
+  logger-service:
+    image: ashutripathi/logger-service:1.0.0
+    deploy:
+      mode: replicated
+      replicas: 1
+  mail-service:
+    image: ashutripathi/mail-service:1.0.0
+    deploy:
+      mode: replicated
+      replicas: 1
+  mongodb:
+    image: mongo
+    restart: always
+    ports:
+      - 27017:27017
+    deploy:
+      mode: global
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin
+      - MONGO_INITDB_ROOT_DATABASE=logs
+  rabbitmq:
+    image: rabbitmq:3.12.4-management-alpine
+    ports:
+      - 5672:5672
+      - 15672:15672
+    restart: always
+    deploy:
+      mode: global
+  mailhog:
+    image: "mailhog/mailhog:latest"
+    restart: always
+    ports:
+      - 1025:1025
+      - 8025:8025
+  postgres:
+    image: postgres
+    restart: always
+    ports:
+      - 5432:5432
+    deploy:
+      mode: global
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=postgres
+  front-end:
+    image: ashutripathi/front-end:1.0.1
+    ports:
+      - 8088:8088
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      - BROKER_URL="http://backend"
+volumes:
+  caddy_data:
+     external: true
+  caddy_config:
+     external: true
+  
+  
+  
